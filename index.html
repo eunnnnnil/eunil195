@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>맞춤형 학습 일정 최적화</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#182230;--muted:#64748b;--line:#e5eaf1;--blue:#3978df;--blue2:#eaf2ff;--green:#0f9f78;--red:#df5b5b;--shadow:0 8px 28px rgba(25,45,75,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.55}
+.wrap{max-width:1050px;margin:0 auto;padding:28px 18px 60px}.hero{padding:28px;border-radius:22px;background:linear-gradient(125deg,#245fc2,#6b8ee9);color:white;margin-bottom:22px}.hero h1{margin:0 0 8px;font-size:clamp(24px,4vw,34px)}.hero p{margin:0;color:#eaf1ff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:16px 0;box-shadow:var(--shadow)}h2{font-size:19px;margin:0 0 16px}.step{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:9px;background:var(--blue2);color:var(--blue);font-size:14px;margin-right:8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:13px;font-weight:650;color:#475569}.field input,.field select{width:100%;border:1px solid #d8e0eb;border-radius:10px;padding:10px 11px;font:inherit;background:#fff;color:var(--ink)}input[type=range]{padding:0;accent-color:var(--blue)}.range-head{display:flex;justify-content:space-between;gap:8px}.range-head output{font-weight:700;color:var(--blue)}
+button{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer;transition:.15s}button:hover{filter:brightness(.96);transform:translateY(-1px)}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #b8d1ff;outline-offset:2px}.primary{background:var(--blue);color:#fff}.secondary{background:#edf2f8;color:#334155}.danger{background:#fff0f0;color:#b93838}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.task-list{display:grid;gap:9px;margin-top:15px}.task{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px}.task small{display:block;color:var(--muted)}.empty{color:var(--muted);padding:15px;text-align:center;background:#f8fafc;border-radius:12px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}.result-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.notice{padding:12px 14px;border-radius:11px;background:#eff6ff;color:#2456a5;margin:12px 0}.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:14px}.day{border:1px solid var(--line);border-radius:12px;padding:10px 8px;min-width:0}.day h3{font-size:13px;margin:0 0 6px}.day .total{font-weight:800;font-size:17px}.day small{color:var(--muted);font-size:11px}.bar{height:10px;background:#edf1f6;border-radius:10px;overflow:hidden;margin:8px 0}.bar span{display:block;height:100%;border-radius:10px}.assignments{font-size:12px;color:#475569;min-height:38px;overflow-wrap:anywhere}.legend{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.legend span{font-size:12px;color:#475569;display:flex;align-items:center;gap:5px}.dot{width:9px;height:9px;border-radius:3px;display:inline-block}.chart{border:1px solid var(--line);border-radius:13px;padding:15px;margin-top:18px}.chart-row{display:grid;grid-template-columns:54px 1fr 45px;gap:9px;align-items:center;margin:10px 0;font-size:12px}.stack{height:18px;background:#eef2f7;border-radius:5px;overflow:hidden;display:flex}.seg{height:100%;min-width:0}.chart-row b{text-align:right}.footer{text-align:center;color:#94a3b8;font-size:12px;margin-top:25px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.days{grid-template-columns:repeat(2,minmax(0,1fr))}.card{padding:17px}.hero{padding:22px}.wrap{padding:18px 12px 45px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><h1>나만의 학습 일정 최적화</h1><p>과목별 학습량과 나의 컨디션을 반영해 무리 없는 주간 시간표를 만들어 보세요.</p></header>
+
+<section class="card">
+<h2><span class="step">1</span>과목 및 할 일 입력</h2>
+<div class="grid">
+<div class="field"><label for="taskName">과목 / 할 일 이름</label><input id="taskName" placeholder="예: 수학 기출문제 풀이"></div>
+<div class="field"><label for="taskHours">예상 소요 시간: <output id="hoursOut">2.5시간</output></label><input id="taskHours" type="range" min=".5" max="15" step=".5" value="2.5"></div>
+<div class="field"><label for="taskDiff">난이도: <output id="diffOut">0.6</output></label><input id="taskDiff" type="range" min=".1" max="1" step=".1" value=".6"></div>
+<div class="field"><label for="taskUrg">긴급도: <output id="urgOut">0.7</output></label><input id="taskUrg" type="range" min=".1" max="1" step=".1" value=".7"></div>
+</div>
+<div class="actions"><button class="primary" id="addTask">+ 과목 추가</button><button class="secondary" id="clearTasks">목록 전체 비우기</button></div>
+<div id="taskList" class="task-list"></div>
+<p class="note">기본 예시 과목이 등록되어 있어요. 필요에 따라 수정하거나 삭제할 수 있습니다.</p>
+</section>
+
+<section class="card">
+<h2><span class="step">2</span>학습 가능 시간 및 학습 성향 설정</h2>
+<div class="grid">
+<div class="field"><label>평일 하루 최대 공부 시간: <output id="weekdayOut">2.5시간</output></label><input id="weekday" type="range" min=".5" max="8" step=".5" value="2.5"></div>
+<div class="field"><label>주말 하루 최대 공부 시간: <output id="weekendOut">6시간</output></label><input id="weekend" type="range" min="2" max="12" step=".5" value="6"></div>
+<div class="field"><label>주말 집중 배정 강도: <output id="focusOut">0.8</output></label><input id="focus" type="range" min="0" max="1" step=".1" value=".8"></div>
+<div class="field"><label>돌발 변수 대비 예비 시간: <output id="bufferOut">15%</output></label><input id="buffer" type="range" min="0" max=".4" step=".05" value=".15"></div>
+<div class="field"><label>현재 누적 피로도: <output id="fatigueOut">0.4</output></label><input id="fatigue" type="range" min="0" max="1" step=".1" value=".4"></div>
+<div class="field"><label>학습 속도 배율: <output id="speedOut">1.0</output></label><input id="speed" type="range" min=".5" max="1.5" step=".1" value="1"></div>
+<div class="field"><label>과거 계획 이행률: <output id="completionOut">0.8</output></label><input id="completion" type="range" min=".3" max="1" step=".05" value=".8"></div>
+</div>
+<div class="actions"><button class="primary" id="generate">주간 최적 학습 시간표 생성</button></div>
+<p class="note">학습 속도와 계획 이행률은 실제 기록을 바탕으로 조정하면 더 현실적인 결과를 얻을 수 있어요.</p>
+</section>
+
+<section class="card">
+<h2><span class="step">3</span>돌발 일정 반영 및 시간표 재조정</h2>
+<div class="grid">
+<div class="field"><label for="eventDay">변수가 발생한 요일</label><select id="eventDay"><option value="0">월요일</option><option value="1">화요일</option><option value="2">수요일</option><option value="3">목요일</option><option value="4">금요일</option><option value="5">토요일</option></select></div>
+<div class="field"><label for="eventType">변수 발생 사유</label><select id="eventType"><option value="academy">학원 / 보충수업</option><option value="school">학교 행사 / 동아리 / 야자</option><option value="rest">컨디션 난조 / 병원 / 휴식</option><option value="family">가족 행사 / 개인 약속</option><option value="etc">기타 (직접 입력)</option></select></div>
+<div class="field"><label for="eventCustom">상세 사유 (선택)</label><input id="eventCustom" placeholder="예: 수학 단과 특강, 치과 예약"></div>
+<div class="field"><label>차감할 공부 시간: <output id="lossOut">2시간</output></label><input id="eventLoss" type="range" min=".5" max="6" step=".5" value="2"></div>
+</div>
+<div class="actions"><button class="primary" id="replan">⚡ 변수 반영 후 남은 요일 재분배</button></div>
+<p class="note">먼저 2단계에서 시간표를 생성해야 재조정할 수 있습니다.</p>
+</section>
+
+<section class="card" id="resultSection">
+<div class="result-head"><h2 style="margin:0"><span class="step">4</span>최적화 결과</h2><button class="secondary" id="print">시간표 인쇄</button></div>
+<div id="result"><div class="empty">아직 생성된 시간표가 없습니다. 위에서 학습 조건을 설정하고 시간표를 생성해 주세요.</div></div>
+</section>
+<div class="footer">본 서비스는 입력한 조건을 바탕으로 학습 시간을 배분하는 일정 계획 도구입니다.</div>
+</div>
+<script>
+const days=['월요일','화요일','수요일','목요일','금요일','토요일','일요일'];
+const colors=['#4A90E2','#10B981','#F59E0B','#8B5CF6','#EC4899','#06B6D4','#EF4444','#84CC16','#6366F1','#14B8A6'];
+let tasks=[
+{name:'수학 기출문제 풀이',hours:4,difficulty:.9,urgency:.8},
+{name:'AI 수행평가 보고서',hours:3.5,difficulty:.7,urgency:.9},
+{name:'영어 단어 및 독해',hours:3,difficulty:.4,urgency:.5}
+];
+let currentSchedule=null;
+const $=id=>document.getElementById(id);
+const val=id=>Number($(id).value);
+function bindRange(id,out,format=v=>v){const el=$(id),o=$(out);const update=()=>o.textContent=format(Number(el.value));el.addEventListener('input',update);update();}
+bindRange('taskHours','hoursOut',v=>v+'시간');bindRange('taskDiff','diffOut',v=>v.toFixed(1));bindRange('taskUrg','urgOut',v=>v.toFixed(1));
+bindRange('weekday','weekdayOut',v=>v+'시간');bindRange('weekend','weekendOut',v=>v+'시간');bindRange('focus','focusOut',v=>v.toFixed(1));bindRange('buffer','bufferOut',v=>Math.round(v*100)+'%');bindRange('fatigue','fatigueOut',v=>v.toFixed(1));bindRange('speed','speedOut',v=>v.toFixed(1));bindRange('completion','completionOut',v=>v.toFixed(2));bindRange('eventLoss','lossOut',v=>v+'시간');
+function renderTasks(){
+ const box=$('taskList');box.innerHTML='';
+ if(!tasks.length){box.innerHTML='<div class="empty">등록된 과목이 없습니다. 위 입력창에서 과목을 추가해 주세요.</div>';return;}
+ tasks.forEach((t,i)=>{const row=document.createElement('div');row.className='task';const info=document.createElement('div');info.innerHTML=`<strong>${escapeHtml(t.name)}</strong><small>기본 ${t.hours}시간 · 난이도 ${t.difficulty.toFixed(1)} · 긴급도 ${t.urgency.toFixed(1)}</small>`;const del=document.createElement('button');del.className='danger';del.textContent='삭제';del.onclick=()=>{tasks.splice(i,1);currentSchedule=null;renderTasks();};row.append(info,del);box.append(row);});
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+$('addTask').onclick=()=>{const name=$('taskName').value.trim();if(!name){alert('과목 이름을 입력해 주세요.');$('taskName').focus();return;}tasks.push({name,hours:val('taskHours'),difficulty:val('taskDiff'),urgency:val('taskUrg')});$('taskName').value='';currentSchedule=null;renderTasks();};
+$('clearTasks').onclick=()=>{if(confirm('등록된 과목을 모두 비울까요?')){tasks=[];currentSchedule=null;renderTasks();}};
+function profile(){return{weekday:val('weekday'),weekend:val('weekend'),focus:val('focus'),buffer:val('buffer'),fatigue:val('fatigue'),speed:val('speed'),completion:val('completion')};}
+function estimateHours(task,p){return task.hours/p.speed*(1+(1-p.completion)*.4);}
+function dailyLimit(day,p){return (day>=5?p.weekend:p.weekday)*(1-p.buffer);}
+function randomSchedule(p,startDay=0){
+ const s=Array.from({length:7},()=>[]);
+ const indices=Array.from({length:7-startDay},(_,i)=>i+startDay);
+ tasks.forEach((task,idx)=>{const blocks=Math.max(1,Math.round(estimateHours(task,p)*2));for(let b=0;b<blocks;b++){let weights=indices.map(d=>d>=5?1+p.focus*2.5:1);let total=weights.reduce((a,b)=>a+b,0),r=Math.random()*total,chosen=indices[0];for(let i=0;i<indices.length;i++){r-=weights[i];if(r<=0){chosen=indices[i];break;}}s[chosen].push(idx);}});
+ return s;
+}
+function fitness(s,p,startDay=0){
+ let score=100,fatigue=p.fatigue,wd=[],we=[];
+ for(let d=startDay;d<7;d++){const blocks=s[d]||[],hrs=blocks.length*.5,limit=dailyLimit(d,p);(d>=5?we:wd).push(hrs);if(hrs>limit)score-=(hrs-limit)*4.5*6;const diff=blocks.reduce((sum,i)=>sum+(tasks[i]?.difficulty||0),0);if(fatigue>.5&&diff>2.2)score-=diff*2.5;if(d>=5)score+=hrs*p.focus*4.5;else blocks.forEach(i=>score+=(tasks[i]?.urgency||0)*(5-d)*.4*.08);fatigue=hrs>limit*.9?Math.min(1,fatigue+.15):Math.max(.1,fatigue-.05);}
+ const variance=a=>{if(a.length<2)return 0;const avg=a.reduce((x,y)=>x+y,0)/a.length;return a.reduce((x,y)=>x+(y-avg)**2,0)/a.length;};
+ score-=variance(wd)*2.5*3.5;score-=variance(we)*2.5*4;return score;
+}
+function crossover(a,b,p,startDay=0){
+ const child=Array.from({length:7},(_,d)=>d<startDay?[...a[d]]:[]);
+ const indices=Array.from({length:7-startDay},(_,i)=>i+startDay);
+ tasks.forEach((_,idx)=>{const src=Math.random()<.5?a:b;for(let d=startDay;d<7;d++){let count=src[d].filter(x=>x===idx).length;if(count>0&&Math.random()<.15){count--;const weights=indices.map(x=>x>=5?1+p.focus*2.5:1);let r=Math.random()*weights.reduce((x,y)=>x+y,0),target=indices[0];for(let j=0;j<indices.length;j++){r-=weights[j];if(r<=0){target=indices[j];break;}}child[target].push(idx);}for(let n=0;n<count;n++)child[d].push(idx);}});return child;
+}
+function optimize(p,startDay=0,generations=100,popSize=50){
+ let pop=Array.from({length:popSize},()=>randomSchedule(p,startDay));
+ for(let g=0;g<generations;g++){pop.sort((a,b)=>fitness(b,p,startDay)-fitness(a,p,startDay));const next=pop.slice(0,10);while(next.length<popSize){const pool=pop.slice(0,Math.min(20,pop.length));const a=pool[Math.floor(Math.random()*pool.length)],b=pool[Math.floor(Math.random()*pool.length)];next.push(crossover(a,b,p,startDay));}pop=next;}
+ pop.sort((a,b)=>fitness(b,p,startDay)-fitness(a,p,startDay));return pop[0];
+}
+function renderResult(schedule,note=''){
+ const p=profile(),totals=[],perTask=tasks.map(()=>Array(7).fill(0));let html=note?`<div class="notice">${escapeHtml(note)}</div>`:'';
+ html+='<div class="days">';
+ for(let d=0;d<7;d++){const blocks=schedule[d]||[],total=blocks.length*.5;totals.push(total);const summary={};blocks.forEach(i=>{if(tasks[i]){perTask[i][d]+=.5;summary[tasks[i].name]=(summary[tasks[i].name]||0)+.5;}});const names=Object.entries(summary).map(([n,h])=>`${escapeHtml(n)} (${h.toFixed(1)}h)`).join(', ')||'휴식';const max=d>=5?p.weekend:p.weekday;html+=`<div class="day"><h3>${days[d]} ${d>=5?'☀️':''}</h3><div class="total">${total.toFixed(1)}h</div><small>최대 ${max.toFixed(1)}h · 예비 ${(Math.max(0,max-total)).toFixed(1)}h</small><div class="bar"><span style="width:${Math.min(100,total/Math.max(max,.1)*100)}%;background:${d>=5?'#10B981':'#4A90E2'}"></span></div><div class="assignments">${names}</div></div>`;}
+ html+='</div><div class="chart"><strong>요일별 과목 학습 시간 배분</strong><div class="legend">';
+ tasks.forEach((t,i)=>html+=`<span><i class="dot" style="background:${colors[i%colors.length]}"></i>${escapeHtml(t.name)}</span>`);html+='</div>';
+ for(let d=0;d<7;d++){const max=p.weekend===0?1:(d>=5?p.weekend:p.weekday);html+=`<div class="chart-row"><span>${days[d].slice(0,1)}</span><div class="stack">`;tasks.forEach((t,i)=>{const hrs=perTask[i][d];if(hrs>0)html+=`<div class="seg" title="${escapeHtml(t.name)}: ${hrs.toFixed(1)}시간" style="width:${hrs/Math.max(max,.1)*100}%;background:${colors[i%colors.length]}"></div>`;});html+='</div><b>'+totals[d].toFixed(1)+'h</b></div>';}
+ html+='</div>';$('result').innerHTML=html;
+}
+$('generate').onclick=()=>{if(!tasks.length){alert('먼저 최소 1개 이상의 과목을 추가해 주세요.');return;}currentSchedule=optimize(profile());renderResult(currentSchedule);};
+const presets={academy:{hours:2,fatigue:.15},school:{hours:1.5,fatigue:.1},rest:{hours:2,fatigue:-.15},family:{hours:2.5,fatigue:.05},etc:{hours:1.5,fatigue:.05}};
+$('eventType').onchange=()=>{$('eventLoss').value=presets[$('eventType').value].hours;$('eventLoss').dispatchEvent(new Event('input'));};
+$('replan').onclick=()=>{
+ if(!currentSchedule){alert('먼저 주간 최적 학습 시간표를 생성해 주세요.');return;}
+ if(!tasks.length){alert('등록된 과목이 없습니다.');return;}
+ const day=Number($('eventDay').value),type=$('eventType').value,preset=presets[type],reason=$('eventType').selectedOptions[0].textContent,custom=$('eventCustom').value.trim();
+ const p=profile();p.fatigue=Math.max(0,Math.min(1,p.fatigue+preset.fatigue));const removed=[];const count=Math.min(Math.round(val('eventLoss')*2),currentSchedule[day].length);for(let i=0;i<count;i++)removed.push(currentSchedule[day].pop());
+ if(!removed.length){renderResult(currentSchedule,`${reason}${custom?' ('+custom+')':''}: ${days[day]}에는 배정된 공부 시간이 없어 기존 일정을 유지합니다.`);return;}
+ const remaining=Array.from({length:6-day},(_,i)=>i+day+1);if(!remaining.length){renderResult(currentSchedule,`${reason}: 남은 요일이 없어 재분배할 수 없습니다. 차감된 ${ (removed.length*.5).toFixed(1)}시간은 일정에서 제외했습니다.`);return;}
+ let best=null,bestScore=-Infinity;
+ for(let trial=0;trial<60;trial++){const candidate=currentSchedule.map(a=>[...a]);removed.forEach(idx=>{const weights=remaining.map(d=>d>=5?1+p.focus*2.5:1);let r=Math.random()*weights.reduce((a,b)=>a+b,0),target=remaining[0];for(let i=0;i<remaining.length;i++){r-=weights[i];if(r<=0){target=remaining[i];break;}}candidate[target].push(idx);});const sc=fitness(candidate,p,day+1);if(sc>bestScore){bestScore=sc;best=candidate;}}
+ currentSchedule=best;$('fatigue').value=p.fatigue;$('fatigue').dispatchEvent(new Event('input'));$('eventCustom').value='';renderResult(currentSchedule,`⚡ ${reason}${custom?' ('+custom+')':''} 사유로 ${days[day]} 공부 시간 ${ (removed.length*.5).toFixed(1)}시간을 조정하고 남은 요일에 재분배했습니다. 피로도 ${p.fatigue.toFixed(2)} 반영`);
+};
+$('print').onclick=()=>{if(!currentSchedule){alert('먼저 시간표를 생성해 주세요.');return;}window.print();};
+renderTasks();
+</script>
+</body>
+</html>
